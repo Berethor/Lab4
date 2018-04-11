@@ -2,7 +2,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <stdbool.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <errno.h>
+
 #include <pthread.h>
+#include <getopt.h>
+
+#include "utils.h"
 
 struct SumArgs {
   int *array;
@@ -12,8 +26,7 @@ struct SumArgs {
 
 int Sum(const struct SumArgs *args) {
   int sum = 0;
-  for(int i = args->begin; i < args->end; ++i)
-  {
+  for(int i = args->begin; i < args->end; ++i) {
     sum += (args->array)[i];
   }
   return sum;
@@ -25,13 +38,6 @@ void *ThreadSum(void *args) {
 }
 
 int main(int argc, char **argv) {
-  /*
-   *  TODO:
-   *  threads_num by command line arguments
-   *  array_size by command line arguments
-   *	seed by command line arguments
-   */
-
   uint32_t threads_num = 0;
   uint32_t array_size = 0;
   uint32_t seed = 0;
@@ -54,18 +60,13 @@ int main(int argc, char **argv) {
           case 0:
           {
                 seed = atoi(optarg);
-                // your code here
-                // error handling
                 break;
           }
           case 1:
           {
                 int tn;
                 tn = atoi(optarg);
-                // your code here
-                // error handling
-                if(tn <= 0)
-                {
+                if(tn <= 0) {
                     return 1;
                 }
                 threads_num = tn;
@@ -74,8 +75,6 @@ int main(int argc, char **argv) {
           case 2:
           {
                 int as = atoi(optarg);
-                // your code here
-                // error handling
                 if(as <= 0)
                 {
                     return 1;
@@ -109,29 +108,21 @@ int main(int argc, char **argv) {
   pthread_t *threads = malloc(sizeof(pthread_t) * threads_num);
   int *array = malloc(sizeof(int) * array_size);
   GenerateArray(array, array_size, seed);
-  for(int i = 0; i < array_size; ++i)
-  {
-    printf("Elem: %d\n", array[i]);
-  }
+  printf("Generated array \n");
+  for(int i = 0; i < array_size; ++i) {
+    printf("%d, ", array[i]);
+    if (i != 0 && (i+1) % (array_size/threads_num) == 0) { printf("\n"); }
+  } 
  
-  /*
-   * TODO:
-   * your code here
-   * Generate array here
-   */
-
   struct SumArgs *args = malloc(sizeof(struct SumArgs) * threads_num);
   int tc = array_size/threads_num;
   for(int i = 0; i < threads_num; ++i)
   {
     args[i].array = array;
     args[i].begin = tc*i;
-    if(i == threads_num - 1)
-    {
+    if(i == threads_num - 1) {
         args[i].end = tc*(i+1) + array_size%threads_num;
-    }
-    else
-    {
+    } else {
         args[i].end = tc*(i+1);
     }
   }
@@ -159,9 +150,6 @@ int main(int argc, char **argv) {
 
   double elapsed_time = (finish_time.tv_sec - start_time.tv_sec) * 1000.0;
   elapsed_time += (finish_time.tv_usec - start_time.tv_usec) / 1000.0;
-  
-  
-  
   
   free(array);
   free(args);
